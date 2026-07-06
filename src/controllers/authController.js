@@ -176,3 +176,54 @@ exports.getMe = async (req, res) => {
     });
   }
 };
+
+exports.updateMe = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { firstName, lastName, email } = req.body;
+
+    if (email) {
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(409).json({
+          success: false,
+          data: null,
+          error: "Email is already in use by another account.",
+        });
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(email && { email }),
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        message: "User information updated successfully.",
+        user: updatedUser,
+      },
+      error: null,
+    });
+  } catch (error) {
+    console.error("Update User Details Error:", error);
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: "An error occurred while updating user details.",
+    });
+  }
+};

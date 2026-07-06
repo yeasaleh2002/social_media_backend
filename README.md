@@ -138,6 +138,36 @@ Fetches details of the currently authenticated user.
 }
 ```
 
+#### `PUT /api/auth/me`
+*(Requires Authorization: Bearer <token>)*
+Updates details of the currently authenticated user. All fields are optional.
+**Payload:**
+```json
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@example.com"
+}
+```
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "User information updated successfully.",
+    "user": {
+      "id": "uuid",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "email": "jane.smith@example.com",
+      "createdAt": "2023-10-01T12:00:00Z",
+      "updatedAt": "2023-10-02T15:30:00Z"
+    }
+  },
+  "error": null
+}
+```
+
 ---
 
 ### 2. Posts & Feed API
