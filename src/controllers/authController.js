@@ -116,3 +116,63 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+exports.logout = async (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      data: {
+        message: "Logout successful.",
+      },
+      error: null,
+    });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: "An error occurred during logout.",
+    });
+  }
+};
+
+exports.getMe = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        data: null,
+        error: "User not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user,
+      },
+      error: null,
+    });
+  } catch (error) {
+    console.error("Get User Details Error:", error);
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: "An error occurred while fetching user details.",
+    });
+  }
+};

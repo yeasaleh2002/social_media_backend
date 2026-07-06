@@ -104,6 +104,40 @@ Authenticates a user and returns a JWT.
 }
 ```
 
+#### `POST /api/auth/logout`
+Logs out the current user. Since this is a stateless JWT implementation, the client is responsible for deleting the token.
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Logout successful."
+  },
+  "error": null
+}
+```
+
+#### `GET /api/auth/me`
+*(Requires Authorization: Bearer <token>)*
+Fetches details of the currently authenticated user.
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "uuid",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com",
+      "createdAt": "2023-10-01T12:00:00Z",
+      "updatedAt": "2023-10-01T12:00:00Z"
+    }
+  },
+  "error": null
+}
+```
+
 ---
 
 ### 2. Posts & Feed API
@@ -245,10 +279,3 @@ Get cursor-paginated users who liked a comment.
   "error": null
 }
 ```
-
----
-## 🧪 Testing with Postman
-We have provided a fully configured Postman collection (`SocialMedia_API_Collection.json`) included in the root directory. 
-- It features an automated Test script on the `Login User` endpoint that dynamically captures the JWT token and saves it to a collection variable.
-- All protected endpoints automatically inherit this token. 
-Simply import the JSON file into Postman and start testing!
