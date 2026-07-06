@@ -269,6 +269,45 @@ Add a comment or nested reply to a post.
 }
 ```
 
+#### `GET /api/posts/:postId/comments`
+*(Requires Authorization: Bearer <token>)*
+Fetches a cursor-paginated flat list of top-level comments and their nested replies for a post.
+**URL Parameter:** `:postId` - The target post ID.
+**Query Parameters:**
+- `limit`: Number of top-level comments to fetch (default: 6)
+- `cursor`: UUID of the last top-level comment received
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "comments": [
+      {
+        "id": "comment-uuid",
+        "content": "Nice post!",
+        "parentId": null,
+        "createdAt": "2023-10-01T12:05:00Z",
+        "author": { "id": "user-uuid", "firstName": "Jane", "lastName": "Smith" },
+        "likeCount": 2,
+        "hasLiked": true
+      },
+      {
+        "id": "reply-uuid",
+        "content": "Thanks!",
+        "parentId": "comment-uuid",
+        "createdAt": "2023-10-01T12:10:00Z",
+        "author": { "id": "uuid", "firstName": "John", "lastName": "Doe" },
+        "likeCount": 0,
+        "hasLiked": false
+      }
+    ],
+    "nextCursor": "comment-uuid"
+  },
+  "error": null
+}
+```
+
+
 #### `POST /api/likes/toggle`
 Toggle (add/remove) a like dynamically.
 **Payload:** (Provide exactly ONE of the following)

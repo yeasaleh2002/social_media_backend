@@ -6,6 +6,7 @@ const { authenticateToken } = require("../middleware/authMiddleware");
 router.use(authenticateToken);
 
 router.post("/posts/:postId/comments", interactionController.addComment);
+router.get("/posts/:postId/comments", interactionController.getPostComments);
 
 router.post("/likes/toggle", interactionController.toggleLike);
 

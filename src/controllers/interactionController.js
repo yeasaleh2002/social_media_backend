@@ -321,3 +321,150 @@ exports.getCommentLikes = async (req, res) => {
     });
   }
 };
+
+exports.getPostComments = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { cursor, limit = 6 } = req.query;
+    const userId = req.user.id;
+    const take = parseInt(limit, 10);
+
+    try {
+      await checkPostAccess(postId, userId);
+    } catch (e) {
+      if (e.message === "NOT_FOUND") {
+        return res
+          .status(404)
+          .json({ success: false, data: null, error: "Post not found." });
+      }
+      if (e.message === "FORBIDDEN") {
+        return res
+          .status(403)
+          .json({ success: false, data: null, error: "Access denied." });
+      }
+    }
+
+    const queryOptions = {
+      take: take + 1,
+      where: { postId, parentId: null },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        content: true,
+        parentId: true,
+        createdAt: true,
+        author: {
+          select: { id: true, firstName: true, lastName: true },
+        },
+        likes: {
+          where: { userId },
+          select: { id: true },
+        },
+        _count: {
+          select: { likes: true },
+        },
+        replies: {
+          select: {
+            id: true,
+            content: true,
+            parentId: true,
+            createdAt: true,
+            author: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+            likes: {
+              where: { userId },
+              select: { id: true },
+            },
+            _count: {
+              select: { likes: true },
+            },
+            replies: {
+              select: {
+                id: true,
+                content: true,
+                parentId: true,
+                createdAt: true,
+                author: {
+                  select: { id: true, firstName: true, lastName: true },
+                },
+                likes: {
+                  where: { userId },
+                  select: { id: true },
+                },
+                _count: {
+                  select: { likes: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    if (cursor) {
+      queryOptions.cursor = { id: cursor };
+    }
+
+    const comments = await prisma.comment.findMany(queryOptions);
+
+    let nextCursor = null;
+    if (comments.length > take) {
+      const nextItem = comments.pop();
+      nextCursor = nextItem.id;
+    }
+
+    const flatComments = [];
+    comments.forEach((c) => {
+      flatComments.push({
+        id: c.id,
+        content: c.content,
+        parentId: c.parentId,
+        createdAt: c.createdAt,
+        author: c.author,
+        likeCount: c._count.likes,
+        hasLiked: c.likes.length > 0,
+      });
+      if (c.replies) {
+        c.replies.forEach((r1) => {
+          flatComments.push({
+            id: r1.id,
+            content: r1.content,
+            parentId: r1.parentId,
+            createdAt: r1.createdAt,
+            author: r1.author,
+            likeCount: r1._count.likes,
+            hasLiked: r1.likes.length > 0,
+          });
+          if (r1.replies) {
+            r1.replies.forEach((r2) => {
+              flatComments.push({
+                id: r2.id,
+                content: r2.content,
+                parentId: r2.parentId,
+                createdAt: r2.createdAt,
+                author: r2.author,
+                likeCount: r2._count.likes,
+                hasLiked: r2.likes.length > 0,
+              });
+            });
+          }
+        });
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: { comments: flatComments, nextCursor },
+      error: null,
+    });
+  } catch (error) {
+    console.error("Get Post Comments Error:", error);
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: "An error occurred while fetching comments.",
+    });
+  }
+};
+

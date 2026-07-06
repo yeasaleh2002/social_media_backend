@@ -72,9 +72,13 @@ exports.getFeed = async (req, res) => {
           select: { id: true },
         },
         comments: {
+          where: {
+            parentId: null,
+          },
           orderBy: {
             createdAt: "desc",
           },
+          take: 6,
           select: {
             id: true,
             content: true,
@@ -100,6 +104,62 @@ exports.getFeed = async (req, res) => {
                 likes: true,
               },
             },
+            replies: {
+              select: {
+                id: true,
+                content: true,
+                parentId: true,
+                createdAt: true,
+                author: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+                likes: {
+                  where: {
+                    userId,
+                  },
+                  select: {
+                    id: true,
+                  },
+                },
+                _count: {
+                  select: {
+                    likes: true,
+                  },
+                },
+                replies: {
+                  select: {
+                    id: true,
+                    content: true,
+                    parentId: true,
+                    createdAt: true,
+                    author: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                      },
+                    },
+                    likes: {
+                      where: {
+                        userId,
+                      },
+                      select: {
+                        id: true,
+                      },
+                    },
+                    _count: {
+                      select: {
+                        likes: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -117,26 +177,59 @@ exports.getFeed = async (req, res) => {
       nextCursor = nextItem.id;
     }
 
-    const formattedPosts = posts.map((post) => ({
-      id: post.id,
-      content: post.content,
-      imageUrl: post.imageUrl,
-      privacy: post.privacy,
-      createdAt: post.createdAt,
-      author: post.author,
-      likeCount: post._count.likes,
-      commentCount: post._count.comments,
-      hasLiked: post.likes.length > 0,
-      comments: post.comments.map((c) => ({
-        id: c.id,
-        content: c.content,
-        parentId: c.parentId,
-        createdAt: c.createdAt,
-        author: c.author,
-        likeCount: c._count.likes,
-        hasLiked: c.likes.length > 0,
-      })),
-    }));
+    const formattedPosts = posts.map((post) => {
+      const flatComments = [];
+      post.comments.forEach((c) => {
+        flatComments.push({
+          id: c.id,
+          content: c.content,
+          parentId: c.parentId,
+          createdAt: c.createdAt,
+          author: c.author,
+          likeCount: c._count.likes,
+          hasLiked: c.likes.length > 0,
+        });
+        if (c.replies) {
+          c.replies.forEach((r1) => {
+            flatComments.push({
+              id: r1.id,
+              content: r1.content,
+              parentId: r1.parentId,
+              createdAt: r1.createdAt,
+              author: r1.author,
+              likeCount: r1._count.likes,
+              hasLiked: r1.likes.length > 0,
+            });
+            if (r1.replies) {
+              r1.replies.forEach((r2) => {
+                flatComments.push({
+                  id: r2.id,
+                  content: r2.content,
+                  parentId: r2.parentId,
+                  createdAt: r2.createdAt,
+                  author: r2.author,
+                  likeCount: r2._count.likes,
+                  hasLiked: r2.likes.length > 0,
+                });
+              });
+            }
+          });
+        }
+      });
+
+      return {
+        id: post.id,
+        content: post.content,
+        imageUrl: post.imageUrl,
+        privacy: post.privacy,
+        createdAt: post.createdAt,
+        author: post.author,
+        likeCount: post._count.likes,
+        commentCount: post._count.comments,
+        hasLiked: post.likes.length > 0,
+        comments: flatComments,
+      };
+    });
 
     res.status(200).json({
       success: true,
