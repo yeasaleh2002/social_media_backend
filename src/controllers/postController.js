@@ -72,15 +72,33 @@ exports.getFeed = async (req, res) => {
           select: { id: true },
         },
         comments: {
-          where: { parentId: null },
-          orderBy: { createdAt: "desc" },
-          take: 2,
+          orderBy: {
+            createdAt: "desc",
+          },
           select: {
             id: true,
             content: true,
+            parentId: true,
             createdAt: true,
             author: {
-              select: { id: true, firstName: true, lastName: true },
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+            likes: {
+              where: {
+                userId,
+              },
+              select: {
+                id: true,
+              },
+            },
+            _count: {
+              select: {
+                likes: true,
+              },
             },
           },
         },
@@ -109,7 +127,15 @@ exports.getFeed = async (req, res) => {
       likeCount: post._count.likes,
       commentCount: post._count.comments,
       hasLiked: post.likes.length > 0,
-      comments: post.comments,
+      comments: post.comments.map((c) => ({
+        id: c.id,
+        content: c.content,
+        parentId: c.parentId,
+        createdAt: c.createdAt,
+        author: c.author,
+        likeCount: c._count.likes,
+        hasLiked: c.likes.length > 0,
+      })),
     }));
 
     res.status(200).json({

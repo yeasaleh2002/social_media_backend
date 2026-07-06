@@ -61,11 +61,34 @@ exports.addComment = async (req, res) => {
         authorId: userId,
         parentId: parentId || null,
       },
+      select: {
+        id: true,
+        content: true,
+        parentId: true,
+        createdAt: true,
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
     });
+
+    const formattedComment = {
+      id: comment.id,
+      content: comment.content,
+      parentId: comment.parentId,
+      createdAt: comment.createdAt,
+      author: comment.author,
+      likeCount: 0,
+      hasLiked: false,
+    };
 
     res.status(201).json({
       success: true,
-      data: { message: "Comment added successfully", comment },
+      data: { message: "Comment added successfully", comment: formattedComment },
       error: null,
     });
   } catch (error) {

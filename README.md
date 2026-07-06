@@ -214,10 +214,29 @@ Fetch a scalable, cursor-paginated timeline of posts.
         "likeCount": 5,
         "commentCount": 2,
         "hasLiked": false,
-        "comments": [ /* Preview of top 2 comments */ ]
+        "comments": [
+          {
+            "id": "comment-uuid",
+            "content": "Nice post!",
+            "parentId": null,
+            "createdAt": "2023-10-01T12:05:00Z",
+            "author": { "id": "user-uuid", "firstName": "Jane", "lastName": "Smith" },
+            "likeCount": 2,
+            "hasLiked": true
+          },
+          {
+            "id": "reply-uuid",
+            "content": "Thanks!",
+            "parentId": "comment-uuid",
+            "createdAt": "2023-10-01T12:10:00Z",
+            "author": { "id": "uuid", "firstName": "John", "lastName": "Doe" },
+            "likeCount": 0,
+            "hasLiked": false
+          }
+        ]
       }
     ],
-    "nextCursor": "uuid" // Pass this in the query parameter for the next page
+    "nextCursor": "uuid"
   },
   "error": null
 }
